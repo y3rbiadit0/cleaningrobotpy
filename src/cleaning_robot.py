@@ -1,5 +1,7 @@
 import time
 
+from .position_state_manager import PositionStateMachineContext, NorthState, SouthState, EastState, WestState
+
 DEPLOYMENT = False  # This variable is to understand whether you are deploying on the actual hardware
 
 try:
@@ -39,6 +41,7 @@ class CleaningRobot:
     RIGHT = 'r'
     FORWARD = 'f'
 
+
     def __init__(self):
         GPIO.setmode(GPIO.BOARD)
         GPIO.setwarnings(False)
@@ -60,6 +63,7 @@ class CleaningRobot:
         self.pos_x = None
         self.pos_y = None
         self.heading = None
+        self.position_state_machine = PositionStateMachineContext(NorthState())
 
         self.recharge_led_on = False
         self.cleaning_system_on = False
@@ -68,25 +72,23 @@ class CleaningRobot:
         self.pos_x = "0"
         self.pos_y = "0"
         self.heading = "N"
+        PositionStateMachineContext(NorthState())
+
 
     def robot_status(self) -> str:
         return f"({self.pos_x},{self.pos_y},{self.heading})"
 
     def execute_command(self, command: str) -> str:
+        current_status = self.robot_status()
         if command == "f":
             self.activate_wheel_motor()
-            self.pos_y = str(int(self.pos_y) + 1)
-            self.heading = "N"
+            self.pos_x, self.pos_y, self.heading = self.position_state_machine.forward_action(current_status)
         elif command == "r":
             self.activate_rotation_motor(command)
-            self.activate_wheel_motor()
-            self.pos_x = str(int(self.pos_x) + 1)
-            self.heading = "W"
+            self.pos_x, self.pos_y, self.heading = self.position_state_machine.right_action(current_status)
         elif command == "l":
             self.activate_rotation_motor(command)
-            self.activate_wheel_motor()
-            self.pos_x = str(int(self.pos_x) - 1)
-            self.heading = "E"
+            self.pos_x, self.pos_y, self.heading = self.position_state_machine.left_action(current_status)
 
         return self.robot_status()
 
