@@ -1,4 +1,5 @@
 import time
+from typing import Optional
 
 from .position_state_manager import PositionStateMachineContext, NorthState, SouthState, EastState, WestState
 
@@ -75,14 +76,21 @@ class CleaningRobot:
         PositionStateMachineContext(NorthState())
 
 
-    def robot_status(self) -> str:
-        return f"({self.pos_x},{self.pos_y},{self.heading})"
+    def robot_status(self, obstacle_x: Optional[int] = None, obstacle_y: Optional[int] = None) -> str:
+        current_status = f"({self.pos_x},{self.pos_y},{self.heading})"
+        if obstacle_x is not None and obstacle_y is not None:
+            obstacle_pos = f"({obstacle_x},{obstacle_y})"
+            return f"{current_status}{obstacle_pos}"
+        return current_status
 
     def execute_command(self, command: str) -> str:
         current_status = self.robot_status()
+        obstacle_x, obstacle_y = None, None
+
         if command == "f":
+            has_obstacle_ahead = self.obstacle_found()
             self.activate_wheel_motor()
-            self.pos_x, self.pos_y, self.heading = self.position_state_machine.forward_action(current_status)
+            self.pos_x, self.pos_y, self.heading, obstacle_x, obstacle_y = self.position_state_machine.forward_action(current_status, has_obstacle_ahead)
         elif command == "r":
             self.activate_rotation_motor(command)
             self.pos_x, self.pos_y, self.heading = self.position_state_machine.right_action(current_status)
@@ -90,7 +98,7 @@ class CleaningRobot:
             self.activate_rotation_motor(command)
             self.pos_x, self.pos_y, self.heading = self.position_state_machine.left_action(current_status)
 
-        return self.robot_status()
+        return self.robot_status(obstacle_x=obstacle_x, obstacle_y=obstacle_y)
 
 
 
