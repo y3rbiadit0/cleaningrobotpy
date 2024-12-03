@@ -86,6 +86,9 @@ class CleaningRobot:
         current_status = self.robot_status()
         obstacle_x, obstacle_y = None, None
 
+        if self.ibs.get_charge_left() <= 10:
+            return f"!{self.robot_status(obstacle_x, obstacle_y)}"
+
         if command == "f":
             has_obstacle_ahead = self.obstacle_found()
             self.activate_wheel_motor()
