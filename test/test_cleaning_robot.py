@@ -55,5 +55,18 @@ class TestCleaningRobot(TestCase):
         self.assertFalse(cleaning_robot.cleaning_system_on)
         self.assertTrue(cleaning_robot.recharge_led_on)
 
+    @patch.object(CleaningRobot, "activate_wheel_motor")
+    @patch.object(CleaningRobot, "activate_rotation_motor")
+    def test_execute_command(self, mock_rotation_motor: Mock, mock_wheel_motor: Mock):
+        expected_new_status = "(0,0,E)"
+        cleaning_robot = CleaningRobot()
+        cleaning_robot.pos_x = 1
+        cleaning_robot.pos_y = 0
+        cleaning_robot.heading = "N"
+        new_status = cleaning_robot.execute_command(cleaning_robot.LEFT)
+        mock_wheel_motor.assert_called_once()
+        mock_rotation_motor.assert_called_once_with(cleaning_robot.LEFT)
+        self.assertEqual(new_status, expected_new_status)
+
 
 
