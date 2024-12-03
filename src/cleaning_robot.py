@@ -73,7 +73,7 @@ class CleaningRobot:
         self.pos_x = "0"
         self.pos_y = "0"
         self.heading = "N"
-        PositionStateMachineContext(NorthState())
+        self.position_state_machine = PositionStateMachineContext(NorthState())
 
 
     def robot_status(self, obstacle_x: Optional[int] = None, obstacle_y: Optional[int] = None) -> str:
@@ -99,7 +99,6 @@ class CleaningRobot:
             self.pos_x, self.pos_y, self.heading = self.position_state_machine.left_action(current_status)
 
         return self.robot_status(obstacle_x=obstacle_x, obstacle_y=obstacle_y)
-
 
 
     def obstacle_found(self) -> bool:
