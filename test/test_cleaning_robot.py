@@ -150,3 +150,40 @@ class TestCleaningRobot(TestCase):
         # Assert
         infrared_sensor_mock.assert_called_once_with(cleaning_robot.INFRARED_PIN)
         self.assertFalse(obstacle_found)
+
+
+    @patch.object(CleaningRobot, "activate_wheel_motor")
+    @patch.object(GPIO, "input")
+    def test_execute_command_forward_y_axis_with_obstacle(self, infrared_sensor_mock: Mock, mock_wheel_motor: Mock):
+        infrared_sensor_mock.return_value = True
+        expected_new_status_with_obstacle = "(0,0,N)(0,1)"
+        cleaning_robot = CleaningRobot()
+        cleaning_robot.initialize_robot()
+
+        # Act
+        command = cleaning_robot.FORWARD
+        new_status = cleaning_robot.execute_command(command)
+
+        # Assert
+        mock_wheel_motor.assert_called_once()
+        self.assertEqual(new_status, expected_new_status_with_obstacle)
+
+    @patch.object(CleaningRobot, "activate_wheel_motor")
+    @patch.object(GPIO, "input")
+    def test_execute_command_forward_x_axis_with_obstacle(self, infrared_sensor_mock: Mock, mock_wheel_motor: Mock):
+        infrared_sensor_mock.return_value = True
+        expected_new_status_with_obstacle = "(0,0,W)(1,0)"
+        cleaning_robot = CleaningRobot()
+        cleaning_robot.initialize_robot()
+
+        # Arrange state machine
+        cleaning_robot.heading = "W"
+        cleaning_robot.position_state_machine.transition_to(WestState())
+
+        # Act
+        command = cleaning_robot.FORWARD
+        new_status = cleaning_robot.execute_command(command)
+
+        # Assert
+        mock_wheel_motor.assert_called_once()
+        self.assertEqual(new_status, expected_new_status_with_obstacle)
