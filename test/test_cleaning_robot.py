@@ -121,4 +121,14 @@ class TestCleaningRobot(TestCase):
         mock_wheel_motor.assert_called_once()
         self.assertEqual(new_status, expected_new_status)
 
+    @patch.object(GPIO, "input")
+    def test_obstacle_found(self, infrared_sensor_mock: Mock):
+        infrared_sensor_mock.return_value = True
+        cleaning_robot = CleaningRobot()
+        cleaning_robot.initialize_robot()
+        obstacle_found = cleaning_robot.obstacle_found()
+        # Assert
+        infrared_sensor_mock.assert_called_once_with(cleaning_robot.INFRARED_PIN)
+        self.assertTrue(obstacle_found)
+
 
