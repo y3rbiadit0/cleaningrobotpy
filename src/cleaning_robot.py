@@ -1,7 +1,7 @@
 import time
 from typing import Optional
 
-from .position_state_manager import PositionStateMachineContext, NorthState, SouthState, EastState, WestState
+from .position_state_manager import PositionStateMachineContext, NorthState
 
 DEPLOYMENT = False  # This variable is to understand whether you are deploying on the actual hardware
 
@@ -9,6 +9,7 @@ try:
     import RPi.GPIO as GPIO
     import board
     import IBS
+
     DEPLOYMENT = True
 except:
     import mock.GPIO as GPIO
@@ -17,7 +18,6 @@ except:
 
 
 class CleaningRobot:
-
     RECHARGE_LED_PIN = 12
     CLEANING_SYSTEM_PIN = 13
     INFRARED_PIN = 15
@@ -41,7 +41,6 @@ class CleaningRobot:
     LEFT = 'l'
     RIGHT = 'r'
     FORWARD = 'f'
-
 
     def __init__(self):
         GPIO.setmode(GPIO.BOARD)
@@ -75,8 +74,8 @@ class CleaningRobot:
         self.heading = "N"
         self.position_state_machine = PositionStateMachineContext(NorthState())
 
-
-    def robot_status(self, obstacle_x: Optional[int] = None, obstacle_y: Optional[int] = None) -> str:
+    def robot_status(self, obstacle_x: Optional[int] = None,
+                     obstacle_y: Optional[int] = None) -> str:
         current_status = f"({self.pos_x},{self.pos_y},{self.heading})"
         if obstacle_x is not None and obstacle_y is not None:
             obstacle_pos = f"({obstacle_x},{obstacle_y})"
@@ -90,16 +89,18 @@ class CleaningRobot:
         if command == "f":
             has_obstacle_ahead = self.obstacle_found()
             self.activate_wheel_motor()
-            self.pos_x, self.pos_y, self.heading, obstacle_x, obstacle_y = self.position_state_machine.forward_action(current_status, has_obstacle_ahead)
+            self.pos_x, self.pos_y, self.heading, obstacle_x, obstacle_y = self.position_state_machine.forward_action(
+                current_status, has_obstacle_ahead)
         elif command == "r":
             self.activate_rotation_motor(command)
-            self.pos_x, self.pos_y, self.heading = self.position_state_machine.right_action(current_status)
+            self.pos_x, self.pos_y, self.heading = self.position_state_machine.right_action(
+                current_status)
         elif command == "l":
             self.activate_rotation_motor(command)
-            self.pos_x, self.pos_y, self.heading = self.position_state_machine.left_action(current_status)
+            self.pos_x, self.pos_y, self.heading = self.position_state_machine.left_action(
+                current_status)
 
         return self.robot_status(obstacle_x=obstacle_x, obstacle_y=obstacle_y)
-
 
     def obstacle_found(self) -> bool:
         return GPIO.input(self.INFRARED_PIN)
@@ -129,8 +130,8 @@ class CleaningRobot:
         # Disable STBY
         GPIO.output(self.STBY, GPIO.HIGH)
 
-        if DEPLOYMENT: # Sleep only if you are deploying on the actual hardware
-            time.sleep(1) # Wait for the motor to actually move
+        if DEPLOYMENT:  # Sleep only if you are deploying on the actual hardware
+            time.sleep(1)  # Wait for the motor to actually move
 
         # Stop the motor
         GPIO.output(self.AIN1, GPIO.LOW)
