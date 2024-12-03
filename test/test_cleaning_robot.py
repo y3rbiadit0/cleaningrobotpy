@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch, call, PropertyMock
 from mock import GPIO
 from mock.ibs import IBS
 from src.cleaning_robot import CleaningRobot
+from src.position_state_manager import WestState, PositionStatus
 
 
 class TestCleaningRobot(TestCase):
@@ -61,8 +62,8 @@ class TestCleaningRobot(TestCase):
         expected_new_status = "(0,0,E)"
         cleaning_robot = CleaningRobot()
 
-        # Arrange status -> (1,0,N)
-        cleaning_robot.pos_x = 1
+        # Arrange status -> (0,0,N)
+        cleaning_robot.pos_x = 0
         cleaning_robot.pos_y = 0
         cleaning_robot.heading = "N"
 
@@ -70,14 +71,14 @@ class TestCleaningRobot(TestCase):
         new_status = cleaning_robot.execute_command(command)
 
         # Assert
-        mock_wheel_motor.assert_called_once()
+        mock_wheel_motor.assert_not_called()
         mock_rotation_motor.assert_called_once_with(command)
         self.assertEqual(new_status, expected_new_status)
 
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(CleaningRobot, "activate_rotation_motor")
     def test_execute_command_right(self, mock_rotation_motor: Mock, mock_wheel_motor: Mock):
-        expected_new_status = "(1,0,W)"
+        expected_new_status = "(0,0,W)"
         cleaning_robot = CleaningRobot()
         cleaning_robot.initialize_robot()
         # Act
@@ -85,15 +86,33 @@ class TestCleaningRobot(TestCase):
         new_status = cleaning_robot.execute_command(command)
 
         # Assert
-        mock_wheel_motor.assert_called_once()
+        mock_wheel_motor.assert_not_called()
         mock_rotation_motor.assert_called_once_with(command)
         self.assertEqual(new_status, expected_new_status)
 
     @patch.object(CleaningRobot, "activate_wheel_motor")
-    def test_execute_command_forward(self, mock_wheel_motor: Mock):
+    def test_execute_command_forward_y_axis(self, mock_wheel_motor: Mock):
         expected_new_status = "(0,1,N)"
         cleaning_robot = CleaningRobot()
         cleaning_robot.initialize_robot()
+        # Act
+        command = cleaning_robot.FORWARD
+        new_status = cleaning_robot.execute_command(command)
+
+        # Assert
+        mock_wheel_motor.assert_called_once()
+        self.assertEqual(new_status, expected_new_status)
+
+    @patch.object(CleaningRobot, "activate_wheel_motor")
+    def test_execute_command_forward_x_axis(self, mock_wheel_motor: Mock):
+        expected_new_status = "(1,0,W)"
+        cleaning_robot = CleaningRobot()
+        cleaning_robot.initialize_robot()
+
+        # Arrange state machine
+        cleaning_robot.heading = "W"
+        cleaning_robot.position_state_machine.transition_to(WestState())
+
         # Act
         command = cleaning_robot.FORWARD
         new_status = cleaning_robot.execute_command(command)
