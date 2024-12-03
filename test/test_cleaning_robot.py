@@ -213,7 +213,7 @@ class TestCleaningRobot(TestCase):
 
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(IBS, "get_charge_left")
-    def test_execute_command_no_battery(self, mock_low_battery: Mock,
+    def test_execute_command_no_battery_forward_action(self, mock_low_battery: Mock,
                                         mock_wheel_motor: Mock):
         mock_low_battery.return_value = 9
         expected_new_status_with_obstacle = "!(0,0,W)"
@@ -226,6 +226,44 @@ class TestCleaningRobot(TestCase):
 
         # Act
         command = self.cleaning_robot.FORWARD
+        new_status = self.cleaning_robot.execute_command(command)
+
+        # Assert
+        mock_wheel_motor.assert_not_called()
+        self.assertEqual(new_status, expected_new_status_with_obstacle)
+
+    @patch.object(CleaningRobot, "activate_wheel_motor")
+    @patch.object(IBS, "get_charge_left")
+    def test_execute_command_no_battery_left_action(self, mock_low_battery: Mock,
+                                                       mock_wheel_motor: Mock):
+        mock_low_battery.return_value = 9
+        expected_new_status_with_obstacle = "!(0,0,N)"
+
+        # Arrange state machine
+        self.cleaning_robot.initialize_robot()
+        self.cleaning_robot.position_state_machine.transition_to(WestState())
+
+        # Act
+        command = self.cleaning_robot.LEFT
+        new_status = self.cleaning_robot.execute_command(command)
+
+        # Assert
+        mock_wheel_motor.assert_not_called()
+        self.assertEqual(new_status, expected_new_status_with_obstacle)
+
+    @patch.object(CleaningRobot, "activate_wheel_motor")
+    @patch.object(IBS, "get_charge_left")
+    def test_execute_command_no_battery_right_action(self, mock_low_battery: Mock,
+                                                       mock_wheel_motor: Mock):
+        mock_low_battery.return_value = 9
+        expected_new_status_with_obstacle = "!(0,0,N)"
+
+        # Arrange state machine
+        self.cleaning_robot.initialize_robot()
+        self.cleaning_robot.position_state_machine.transition_to(WestState())
+
+        # Act
+        command = self.cleaning_robot.RIGHT
         new_status = self.cleaning_robot.execute_command(command)
 
         # Assert
