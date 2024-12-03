@@ -57,16 +57,49 @@ class TestCleaningRobot(TestCase):
 
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(CleaningRobot, "activate_rotation_motor")
-    def test_execute_command(self, mock_rotation_motor: Mock, mock_wheel_motor: Mock):
+    def test_execute_command_left(self, mock_rotation_motor: Mock, mock_wheel_motor: Mock):
         expected_new_status = "(0,0,E)"
         cleaning_robot = CleaningRobot()
+
+        # Arrange status -> (1,0,N)
         cleaning_robot.pos_x = 1
         cleaning_robot.pos_y = 0
         cleaning_robot.heading = "N"
-        new_status = cleaning_robot.execute_command(cleaning_robot.LEFT)
+
+        command = cleaning_robot.LEFT
+        new_status = cleaning_robot.execute_command(command)
+
+        # Assert
         mock_wheel_motor.assert_called_once()
-        mock_rotation_motor.assert_called_once_with(cleaning_robot.LEFT)
+        mock_rotation_motor.assert_called_once_with(command)
         self.assertEqual(new_status, expected_new_status)
 
+    @patch.object(CleaningRobot, "activate_wheel_motor")
+    @patch.object(CleaningRobot, "activate_rotation_motor")
+    def test_execute_command_right(self, mock_rotation_motor: Mock, mock_wheel_motor: Mock):
+        expected_new_status = "(1,0,W)"
+        cleaning_robot = CleaningRobot()
+        cleaning_robot.initialize_robot()
+        # Act
+        command = cleaning_robot.RIGHT
+        new_status = cleaning_robot.execute_command(command)
+
+        # Assert
+        mock_wheel_motor.assert_called_once()
+        mock_rotation_motor.assert_called_once_with(command)
+        self.assertEqual(new_status, expected_new_status)
+
+    @patch.object(CleaningRobot, "activate_wheel_motor")
+    def test_execute_command_forward(self, mock_wheel_motor: Mock):
+        expected_new_status = "(0,1,N)"
+        cleaning_robot = CleaningRobot()
+        cleaning_robot.initialize_robot()
+        # Act
+        command = cleaning_robot.FORWARD
+        new_status = cleaning_robot.execute_command(command)
+
+        # Assert
+        mock_wheel_motor.assert_called_once()
+        self.assertEqual(new_status, expected_new_status)
 
 
