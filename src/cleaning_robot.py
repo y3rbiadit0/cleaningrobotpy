@@ -1,6 +1,7 @@
 import time
 from typing import Optional
 
+from mock.ltc2990 import LTC2990
 from .position_state_manager import PositionStateMachineContext, NorthState
 
 DEPLOYMENT = False  # This variable is to understand whether you are deploying on the actual hardware
@@ -59,6 +60,7 @@ class CleaningRobot:
 
         ic2 = board.I2C()
         self.ibs = IBS.IBS(ic2)
+        self.ltc2990 = LTC2990(ic2)
 
         self.pos_x = None
         self.pos_y = None
@@ -84,8 +86,11 @@ class CleaningRobot:
 
     def execute_command(self, command: str) -> str:
         current_status = self.robot_status()
+        current_temp = self.ltc2990.get_temperature()
         obstacle_x, obstacle_y = None, None
 
+        if current_temp >= 70:
+            raise CleaningRobotError(f"Temperature exceeded safe limit! Current: {current_temp}°C")
         if self.ibs.get_charge_left() <= 10:
             return f"!{self.robot_status(obstacle_x, obstacle_y)}"
 
