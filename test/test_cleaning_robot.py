@@ -3,7 +3,8 @@ from unittest.mock import Mock, patch, call
 
 from mock import GPIO
 from mock.ibs import IBS
-from src.cleaning_robot import CleaningRobot
+from mock.ltc2990 import LTC2990
+from src.cleaning_robot import CleaningRobot, CleaningRobotError
 from src.position_state_manager import WestState
 
 
@@ -30,11 +31,13 @@ class TestCleaningRobot(TestCase):
 
         self.assertEqual(status, expected_init_coordinates)
 
+    @patch.object(LTC2990, "get_temperature", return_value=50)
     @patch.object(IBS, "get_charge_left")
     @patch.object(GPIO, "output")
     def test_manage_cleaning_system_battery_lower_than_ten_percent(self,
                                                                    mock_gpio_output: Mock,
-                                                                   mock_low_battery: Mock):
+                                                                   mock_low_battery: Mock,
+                                                                   mock_temperature_sensor: Mock):
         mock_low_battery.return_value = 9
 
         self.cleaning_robot.manage_cleaning_system()
@@ -48,11 +51,13 @@ class TestCleaningRobot(TestCase):
         self.assertFalse(self.cleaning_robot.cleaning_system_on)
         self.assertTrue(self.cleaning_robot.recharge_led_on)
 
+    @patch.object(LTC2990, "get_temperature", return_value=50)
     @patch.object(IBS, "get_charge_left")
     @patch.object(GPIO, "output")
     def test_manage_cleaning_system_battery_greater_than_ten_percent(self,
                                                                      mock_gpio_output: Mock,
-                                                                     mock_charged_battery: Mock):
+                                                                     mock_charged_battery: Mock,
+                                                                     mock_temperature_sensor: Mock):
         mock_charged_battery.return_value = 11
 
         self.cleaning_robot.manage_cleaning_system()
@@ -66,12 +71,14 @@ class TestCleaningRobot(TestCase):
         self.assertTrue(self.cleaning_robot.cleaning_system_on)
         self.assertFalse(self.cleaning_robot.recharge_led_on)
 
+    @patch.object(LTC2990, "get_temperature", return_value=50)
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(CleaningRobot, "activate_rotation_motor")
     @patch.object(IBS, "get_charge_left")
     def test_execute_command_left(self, mock_charged_battery: Mock,
                                   mock_rotation_motor: Mock,
-                                  mock_wheel_motor: Mock):
+                                  mock_wheel_motor: Mock,
+                                  mock_temperature_sensor: Mock):
         mock_charged_battery.return_value = 90
         expected_new_status = "(0,0,E)"
 
@@ -88,12 +95,14 @@ class TestCleaningRobot(TestCase):
         mock_rotation_motor.assert_called_once_with(command)
         self.assertEqual(new_status, expected_new_status)
 
+    @patch.object(LTC2990, "get_temperature", return_value=50)
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(CleaningRobot, "activate_rotation_motor")
     @patch.object(IBS, "get_charge_left")
     def test_execute_command_right(self, mock_charged_battery: Mock,
                                    mock_rotation_motor: Mock,
-                                   mock_wheel_motor: Mock):
+                                   mock_wheel_motor: Mock,
+                                   mock_temperature_sensor: Mock):
         mock_charged_battery.return_value = 90
         expected_new_status = "(0,0,W)"
 
@@ -107,10 +116,12 @@ class TestCleaningRobot(TestCase):
         mock_rotation_motor.assert_called_once_with(command)
         self.assertEqual(new_status, expected_new_status)
 
+    @patch.object(LTC2990, "get_temperature", return_value=50)
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(IBS, "get_charge_left")
     def test_execute_command_forward_y_axis(self, mock_charged_battery: Mock,
-                                            mock_wheel_motor: Mock):
+                                            mock_wheel_motor: Mock,
+                                            mock_temperature_sensor: Mock):
         mock_charged_battery.return_value = 90
         expected_new_status = "(0,1,N)"
 
@@ -123,10 +134,12 @@ class TestCleaningRobot(TestCase):
         mock_wheel_motor.assert_called_once()
         self.assertEqual(new_status, expected_new_status)
 
+    @patch.object(LTC2990, "get_temperature", return_value=50)
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(IBS, "get_charge_left")
     def test_execute_command_forward_x_axis(self, mock_charged_battery: Mock,
-                                            mock_wheel_motor: Mock):
+                                            mock_wheel_motor: Mock,
+                                            mock_temperature_sensor: Mock):
         mock_charged_battery.return_value = 90
         expected_new_status = "(1,0,W)"
 
@@ -165,13 +178,15 @@ class TestCleaningRobot(TestCase):
         infrared_sensor_mock.assert_called_once_with(self.cleaning_robot.INFRARED_PIN)
         self.assertFalse(obstacle_found)
 
+    @patch.object(LTC2990, "get_temperature", return_value=50)
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(GPIO, "input")
     @patch.object(IBS, "get_charge_left")
     def test_execute_command_forward_y_axis_with_obstacle(self,
                                                           mock_charged_battery: Mock,
                                                           infrared_sensor_mock: Mock,
-                                                          mock_wheel_motor: Mock):
+                                                          mock_wheel_motor: Mock,
+                                                          mock_temperature_sensor: Mock):
         mock_charged_battery.return_value = 90
         infrared_sensor_mock.return_value = True
         expected_new_status_with_obstacle = "(0,0,N)(0,1)"
@@ -186,13 +201,15 @@ class TestCleaningRobot(TestCase):
         mock_wheel_motor.assert_called_once()
         self.assertEqual(new_status, expected_new_status_with_obstacle)
 
+    @patch.object(LTC2990, "get_temperature", return_value=50)
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(GPIO, "input")
     @patch.object(IBS, "get_charge_left")
     def test_execute_command_forward_x_axis_with_obstacle(self,
                                                           mock_charged_battery: Mock,
                                                           infrared_sensor_mock: Mock,
-                                                          mock_wheel_motor: Mock):
+                                                          mock_wheel_motor: Mock,
+                                                          mock_temperature_sensor: Mock):
         mock_charged_battery.return_value = 90
         infrared_sensor_mock.return_value = True
         expected_new_status_with_obstacle = "(0,0,W)(1,0)"
@@ -211,10 +228,12 @@ class TestCleaningRobot(TestCase):
         mock_wheel_motor.assert_called_once()
         self.assertEqual(new_status, expected_new_status_with_obstacle)
 
+    @patch.object(LTC2990, "get_temperature", return_value=50)
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(IBS, "get_charge_left")
     def test_execute_command_no_battery_forward_action(self, mock_low_battery: Mock,
-                                        mock_wheel_motor: Mock):
+                                        mock_wheel_motor: Mock,
+                                                       mock_temperature_sensor: Mock):
         mock_low_battery.return_value = 9
         expected_new_status_with_obstacle = "!(0,0,W)"
 
@@ -232,10 +251,12 @@ class TestCleaningRobot(TestCase):
         mock_wheel_motor.assert_not_called()
         self.assertEqual(new_status, expected_new_status_with_obstacle)
 
+    @patch.object(LTC2990, "get_temperature", return_value=50)
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(IBS, "get_charge_left")
     def test_execute_command_no_battery_left_action(self, mock_low_battery: Mock,
-                                                       mock_wheel_motor: Mock):
+                                                       mock_wheel_motor: Mock,
+                                                    mock_temperature_sensor: Mock):
         mock_low_battery.return_value = 9
         expected_new_status_with_obstacle = "!(0,0,N)"
 
@@ -251,10 +272,12 @@ class TestCleaningRobot(TestCase):
         mock_wheel_motor.assert_not_called()
         self.assertEqual(new_status, expected_new_status_with_obstacle)
 
+    @patch.object(LTC2990, "get_temperature", return_value=50)
     @patch.object(CleaningRobot, "activate_wheel_motor")
     @patch.object(IBS, "get_charge_left")
     def test_execute_command_no_battery_right_action(self, mock_low_battery: Mock,
-                                                       mock_wheel_motor: Mock):
+                                                       mock_wheel_motor: Mock,
+                                                     mock_temperature_sensor: Mock):
         mock_low_battery.return_value = 9
         expected_new_status_with_obstacle = "!(0,0,N)"
 
@@ -269,3 +292,44 @@ class TestCleaningRobot(TestCase):
         # Assert
         mock_wheel_motor.assert_not_called()
         self.assertEqual(new_status, expected_new_status_with_obstacle)
+
+
+    @patch.object(CleaningRobot, "activate_wheel_motor")
+    @patch.object(IBS, "get_charge_left")
+    @patch.object(LTC2990, "get_temperature")
+    def test_execute_command_internal_temperature_high(self,
+                                                       mock_temperature_sensor: Mock,
+                                                       mock_enough_battery: Mock,
+                                                       mock_wheel_motor: Mock):
+
+        mock_temperature_sensor.return_value = 70
+        mock_enough_battery.return_value = 90
+        self.cleaning_robot.initialize_robot()
+
+        # Act
+        command = self.cleaning_robot.FORWARD
+
+        # Assert
+
+        self.assertRaises(
+            CleaningRobotError, lambda: self.cleaning_robot.execute_command(command)
+        )
+        mock_wheel_motor.assert_not_called()
+
+    @patch.object(CleaningRobot, "activate_wheel_motor")
+    @patch.object(IBS, "get_charge_left")
+    @patch.object(LTC2990, "get_temperature")
+    def test_execute_command_internal_temperature_below_threshold(self,
+                                                       mock_temperature_sensor: Mock,
+                                                       mock_enough_battery: Mock,
+                                                       mock_wheel_motor: Mock):
+        mock_temperature_sensor.return_value = 69
+        mock_enough_battery.return_value = 90
+        self.cleaning_robot.initialize_robot()
+
+        # Act
+        command = self.cleaning_robot.FORWARD
+
+        # Assert
+        self.cleaning_robot.execute_command(command)
+        mock_wheel_motor.assert_called_once()
