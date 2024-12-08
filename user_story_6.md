@@ -21,7 +21,7 @@ Update the implementation of `CleaningRobot.execute_command(command: str) -> str
 
 ## Example
 
-Suppose the current temperature of the robot exceeds 70°C, and the status of the robot is `(2,3,E)`.
+Suppose the current temperature of the robot exceeds or equals 70°C, and the status of the robot is `(2,3,E)`.
 If the robot receives the command `f`, it stops all motors and raises an exception with the following message:  
 `"Temperature exceeded safe limit! Current: 75°C"`
 
