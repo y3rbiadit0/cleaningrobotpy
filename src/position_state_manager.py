@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Tuple, Optional
@@ -39,7 +40,7 @@ class PositionStateMachineContext:
         self.transition_to(state)
 
     def transition_to(self, state: State):
-        print(f"Context: Transition to {type(state).__name__}")
+        logging.info(f"Context: Transition to {type(state).__name__}")
         self._state = state
         self._state.context = self
 
